@@ -9,6 +9,9 @@ from gcode.gcode_visualizer.VRepRapStates import VRepRapStates
 
 
 class VRepRapMove:
+    """
+    Represents a movement of the printhead from one point to another
+    """
     def __init__(self, x_start, y_start, z_start, x_end, y_end, z_end, speed, state: VRepRapStates):
         self.x_s = x_start
         self.y_s = y_start
@@ -75,7 +78,8 @@ class VRepRapMove:
 
     def to_gcode(self, _comment="", _digits=4, x_changed=True, y_changed=True, z_changed=True) -> str:
         """
-        Only print in case the value has changed
+        Generates the actual gcode for writing to the output file. Change the syntax for how to output normals here if
+        required.
 
         :param _comment:
         :param _digits:
@@ -100,9 +104,11 @@ class VRepRapMove:
 
         if self.state is VRepRapStates.PRINTING:
             if self._normal is None:
+                # No normal vector computed - only output x, y, z
                 return f"G1{x_out}{y_out}{z_out} " \
                     f"E{self.extrusion_rate:{_digits}f}{formatted_comment}\n"
             else:
+                # Output x, y, z and the normal vector as N O R
                 return f"G1{x_out}{y_out}{z_out} " \
                     f"E{self.extrusion_rate:{_digits}f} N{self._normal[0]:{_digits}f} O{self._normal[1]:{_digits}f} " \
                     f"R{self._normal[2]:{_digits}f}{formatted_comment}\n"

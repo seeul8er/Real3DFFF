@@ -2,6 +2,9 @@ from enum import Enum
 
 
 class VRepRapStates(Enum):
+    """
+    States the printer can be in when making a VRepRapMove
+    """
     PRINTING = 1  # Prints/Extrudes a line
     TRAVELING = 2
     EXTRUDING = 3  # Just squeezes out some material without moving the print head

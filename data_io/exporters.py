@@ -16,10 +16,10 @@ from math import pi
 
 from CColors import CColors
 from gcode.gcode_visualizer.VRepRapStates import VRepRapStates
-from globals import show_ui, LINEAR_DEFLECTION, ANGULAR_DEFLECTION, ROOT_FOLDER_PATH
+from globals import LINEAR_DEFLECTION, ANGULAR_DEFLECTION, ROOT_FOLDER_PATH
 
 
-def export_shape_to_step(_new_shape=None, new_export_path="export.step", running_os='w'):
+def export_shape_to_step(_new_shape=None, new_export_path="export.step"):
     """
     Helper to export any TopoDS_Shape to STEP format. Opens a file saving dialog where the user can specify a location.
     If "show_ui" is False: Uses :param new_export_path as the location for saving
@@ -27,28 +27,15 @@ def export_shape_to_step(_new_shape=None, new_export_path="export.step", running
 
     :param _new_shape: A TopoDS_Shape that you want to save on disk
     :param new_export_path: A path to a location where the file should be saved if "show_ui" is False
-    :param running_os: For cross platform. Set to 'l' if Linux or 'w' if running on Windows
     """
     if _new_shape is not None:
         _mesh_preform = generate_mesh(LINEAR_DEFLECTION, ANGULAR_DEFLECTION, _new_shape)
-        if show_ui:
-            save_url = QFileDialog.getSaveFileUrl(caption="Save as *.STEP", filter="STEP files (*.stp *.step)")
-            thepath = save_url[0].toString()
-            if not thepath.endswith(".step"):
-                if not thepath.endswith(".stp"):
-                    thepath = thepath + ".step"
-            if thepath.startswith("file:///") and running_os == 'w':  # windows - use of os package might be cleverer
-                thepath = thepath[8:]
-            elif thepath.startswith("file://") and running_os == 'l':  # linux - use of os package might be cleverer
-                thepath = thepath[7:]
-            export_step(_mesh_preform, filename=thepath)
-        else:
-            export_step(_mesh_preform, filename=new_export_path)
+        export_step(_mesh_preform, filename=new_export_path)
     else:
         print(CColors.FAIL + "Error: Can not export to STEP. No shape given!" + CColors.ENDC)
 
 
-def export_shape_to_stl(_new_shape=None, new_export_path="export.stl", saveascii=False, running_os='w'):
+def export_shape_to_stl(_new_shape=None, new_export_path="export.stl", saveascii=False):
     """
     Helper to export any TopoDS_Shape or SMESH_Mesh to STL format.
     Opens a file saving dialog where the user can specify a location.
@@ -57,24 +44,12 @@ def export_shape_to_stl(_new_shape=None, new_export_path="export.stl", saveascii
     :param _new_shape: A TopoDS_Shape or SMESH_Mesh that you want to save on disk
     :param new_export_path: A path to a location where the file should be saved if "show_ui" is False
     :param saveascii: Use ASCII file format (bigger file size but readable by humans)
-    :param running_os: For cross platform. Set to 'l' if Linux or 'w' if running on Windows
     """
     if _new_shape is not None:
         if isinstance(_new_shape, TopoDS_Shape):
             # before exporting to STL the shape needs to be converted to a mesh (triangles)
             _new_shape = generate_mesh(LINEAR_DEFLECTION, ANGULAR_DEFLECTION, _new_shape)
-        if show_ui:
-            save_url = QFileDialog.getSaveFileUrl(caption="Save as *.STL", filter="*.stl")
-            thepath = save_url[0].toString()
-            if not thepath.endswith(".stl"):
-                thepath = thepath + ".stl"
-            if thepath.startswith("file:///") and running_os == 'w':  # windows
-                thepath = thepath[8:]
-            elif thepath.startswith("file://") and running_os == 'l':  # linux
-                thepath = thepath[7:]
-            export_stl(_new_shape, filename=thepath, bool_asciimode=saveascii)
-        else:
-            export_stl(_new_shape, filename=new_export_path, bool_asciimode=saveascii)
+        export_stl(_new_shape, filename=new_export_path, bool_asciimode=saveascii)
     else:
         print(CColors.FAIL + "Error: Can not export STL. No shape given!" + CColors.ENDC)
 
@@ -87,7 +62,7 @@ def save_as(existing_file_on_disk: str, qfiledialog_filter="G-Code (*.gcode)", r
 
     :param existing_file_on_disk: Path to file that you want to save somewhere else
     :param qfiledialog_filter: A filter that is passed to the QFileDialog class.
-    :param running_os: For cross platform. Set to 'l' if Linux or 'w' if running on Windows
+    :param running_os: For cross-platform. Set to 'l' if Linux or 'w' if running on Windows
     """
     save_url = QFileDialog.getSaveFileUrl(caption="Select new folder & name", filter=qfiledialog_filter)
     new_file_path = save_url[0].toString()
@@ -194,6 +169,7 @@ def export_to_blend(gcode, export_path=os.path.join(ROOT_FOLDER_PATH, "real3dfff
     To visualize the G-Code and render high quality images in Blender. Material can be based on speed or infill/perimeter
     Layers can be animated: 1 layer/frame
 
+    :param default_infill_color: Color of the infill
     :param gcode: LDCode file
     :param nozzle_diameter: Determines width and height of extrusion if no layer height is set
     :param scale_factor: Scale all coords and lengths by this value to better fit inside the blender scene

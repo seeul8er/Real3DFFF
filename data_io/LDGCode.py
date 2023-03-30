@@ -17,14 +17,10 @@ from OCC.Quantity import Quantity_Color, Quantity_NOC_GRAY90, Quantity_NOC_GREEN
 from OCC.SMESH import SMESH_MeshVSLink, SMESH_Mesh, SMESH_Gen, SMESH_MeshEditor
 from OCC.SMESHDS import SMESHDS_Mesh
 from OCC.TopoDS import TopoDS_Shape
-from OCC.gp import gp_Pnt
 
-from OCCUtils.Construct import make_edge
 from data_io.ImportType import ImportType
 from data_io.LoadedData import LoadedData
 from gcode.gcode_visualizer.VRepRapStates import VRepRapStates
-from globals import ROOT_FOLDER_PATH
-from utils import list_to_compound_shape
 
 
 class LDGCode(LoadedData):

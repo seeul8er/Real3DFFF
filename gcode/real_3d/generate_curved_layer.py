@@ -29,7 +29,7 @@ from gcode.gcode_visualizer.GCodeLayerC import GCodeLayerC
 from gcode.gcode_visualizer.GCodeLine import GCodeLine
 from gcode.gcode_visualizer.VRepRapMove import VRepRapMove
 from gcode.gcode_visualizer.VRepRapStates import VRepRapStates
-from globals import BUILD_VOLUME_MAX_X, BUILD_VOLUME_MAX_Y, ANGULAR_DEFLECTION, LINEAR_DEFLECTION
+from globals import ANGULAR_DEFLECTION, LINEAR_DEFLECTION
 from utils import transform_shape
 
 

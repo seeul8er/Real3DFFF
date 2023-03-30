@@ -1,7 +1,7 @@
 import os
 
 from data_io.loaders import load_step
-from gcode.gcode_visualizer.virtual_reprap import process_gcode
+from gcode.gcode_visualizer.virtual_reprap import VirtualRepRap
 from gcode.real_3d.generate_curved_layer import generate_curved_layer_christl
 from globals import ANGULAR_DEFLECTION
 
@@ -9,11 +9,11 @@ if __name__ == "__main__":
     """
     Generate curved layer Fused Filament Fabrication paths using the algorithm according to Christl
     """
-    path_geo = "test_geometry/real3dfff/selection/sem_test_4_halter.stp"
+    path_geo = "test_geometry/wave_rounded/wave_round.stp"
     # path to preform G-Code
-    path_gcode = "test_geometry/real3dfff/selection/sem_test_4_halter_preform_sliced.gcode"
-    # Path to output file
-    path_out_file = "test_geometry/real3dfff/selection/sem_test_4_halter_curved.gcode"
+    path_gcode = "test_geometry/wave_rounded/wave_round_preform_IdeaMaker.gcode"
+    # Path to output file that will be created with the final curved layer gcode inside
+    path_out_file = "test_geometry/wave_rounded/wave_round_curved.gcode"
     # supply preform geometry if you want to use the local layer index -> This feature does not work yet use None
     path_preform = None
 
@@ -22,7 +22,8 @@ if __name__ == "__main__":
 
     part_shape = load_step(path_geo)
     preform_shape = load_step(path_preform)
-    preform_gcode = process_gcode(path_gcode, 0.2, 0.4)
+    vreprap = VirtualRepRap()
+    preform_gcode = vreprap.readin_gcode(path_gcode, 0.2, 0.4)
 
     curved_layer_gcode = generate_curved_layer_christl(part_shape, preform_gcode, path_out_file,
                                                        preform_shape=preform_shape,
@@ -34,5 +35,5 @@ if __name__ == "__main__":
                                                        low_trav_clearance=0.5,
                                                        high_trav_clearance=1,
                                                        max_len_direct_trav=2,
-                                                       compute_normals=True
+                                                       compute_normals=False
                                                        )

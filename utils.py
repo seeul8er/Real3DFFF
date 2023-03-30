@@ -12,17 +12,6 @@ from OCC.gp import gp_Vec, gp_Pnt, gp_Dir, gp_Lin, gp_Trsf, gp_Quaternion, gp_In
 
 from OCCUtils import Topo
 from OCCUtils.Construct import make_vertex, make_edge
-from globals import draw_build_volume, BUILD_VOLUME_MAX_X, BUILD_VOLUME_MAX_Y
-
-
-def draw_buildvolume(display_viewer3d):
-    if draw_build_volume:
-        p1 = gp_Pnt(0, 0, 0)
-        p2 = gp_Pnt(BUILD_VOLUME_MAX_X, 0, 0)
-        p3 = gp_Pnt(BUILD_VOLUME_MAX_X, BUILD_VOLUME_MAX_Y, 0)
-        p4 = gp_Pnt(0, BUILD_VOLUME_MAX_Y, 0)
-        display_viewer3d.DisplayShape(make_closed_polygon([p1, p2, p3, p4]))
-        draw_point_as_sphere(gp_Pnt(0, 0, 0), display_viewer3d)  # Origin
 
 
 def make_extrusion(face, length, vector=gp_Vec(0., 0., 1.)):
@@ -303,68 +292,6 @@ def apply_transformation(points_matrix: numpy.ndarray, homo_transfo_matrix: nump
         # Allows to transform an entire array of points in one step
         # (matrix with one point per row)
         return numpy.matmul(homo_transfo_matrix[0:3, 0:3], points_matrix.T).T + homo_transfo_matrix[:3, 3].T
-
-
-def transform_mesh(new_mesh: SMESH_Mesh, trans_rot) -> SMESH_Mesh:
-    """
-    First translates and then rotates the object/smesh mesh in 3D space.
-
-    :param new_mesh: SMESH_Mesh you want to transform
-    :param trans_rot: [translateX, translateY, translateZ, rotateX, rotateY, rotateZ] in mm and rad
-    :return: The transformed SMESH_Mesh
-    """
-
-    def rotation_matrix(angle, direction, point=None):
-        """
-        Return matrix to rotate about axis defined by point and direction.
-        (C) Christoph Gohlke: https://pypi.org/project/transformations/2018.10.18
-        """
-        sina = numpy.math.sin(angle)
-        cosa = numpy.math.cos(angle)
-        # rotation matrix around unit vector
-        R = numpy.diag([cosa, cosa, cosa])
-        R += numpy.outer(direction, direction) * (1.0 - cosa)
-        direction *= sina
-        R += numpy.array([[0.0, -direction[2], direction[1]],
-                          [direction[2], 0.0, -direction[0]],
-                          [-direction[1], direction[0], 0.0]])
-        M = numpy.identity(4)
-        M[:3, :3] = R
-        if point is not None:
-            # rotation not around origin
-            point = numpy.array(point[:3], dtype=numpy.float64, copy=False)
-            M[:3, 3] = point - numpy.dot(R, point)
-        return M
-
-    if type(trans_rot) is list:
-        _rx = rotation_matrix(trans_rot[3], numpy.array([1, 0, 0], dtype=numpy.float64))
-        _ry = rotation_matrix(trans_rot[4], numpy.array([0, 1, 0], dtype=numpy.float64))
-        _rz = rotation_matrix(trans_rot[5], numpy.array([0, 0, 1], dtype=numpy.float64))
-        R = numpy.identity(4)
-        R = numpy.dot(R, _rx)
-        R = numpy.dot(R, _ry)
-        R = numpy.dot(R, _rz)
-
-        mesh_ds = new_mesh.GetMeshDS()
-        nodes_iter = mesh_ds.nodesIterator()
-        while nodes_iter.more():
-            smds_MeshNode = nodes_iter.next()
-            # Rotate and Translate
-            new_coords = numpy.dot(R, numpy.array([[smds_MeshNode.X() + trans_rot[0]],
-                                                   [smds_MeshNode.Y() + trans_rot[1]],
-                                                   [smds_MeshNode.Z() + trans_rot[2]],
-                                                   [1]]))
-            smds_MeshNode.setXYZ(float(new_coords[0]), float(new_coords[1]), float(new_coords[2]))
-    elif type(trans_rot) is numpy.ndarray:
-        mesh_ds = new_mesh.GetMeshDS()
-        nodes_iter = mesh_ds.nodesIterator()
-        while nodes_iter.more():
-            smds_meshnode = nodes_iter.next()
-            n_cords = apply_transformation(numpy.array([smds_meshnode.X(), smds_meshnode.Y(), smds_meshnode.Z()]),
-                                           trans_rot)
-            smds_meshnode.setXYZ(float(n_cords[0]), float(n_cords[1]), float(n_cords[2]))
-    return new_mesh
-
 
 def set_axes_equal(ax):
     def set_axes_radius(_ax, _origin, _radius):

@@ -9,6 +9,9 @@ from gcode.gcode_visualizer.VRepRapMove import VRepRapMove
 
 
 class GCodeLine:
+    """
+    Processor for reading in a line of GCode from a file
+    """
     line_regex = re.compile(r'^(?P<block_and_comment>.*?)?(?P<macro>%.*%?)?\s*$')
     regex = re.compile(r'\s*;\s*(?P<text>.*)$')
 
