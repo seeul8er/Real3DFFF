@@ -1,56 +1,65 @@
 # <img src="real3dfff_logo.png" width="100" height="100" /> Real3DFFF
-![Real3DFFF UI](wiki_content/real3dfff_ui.JPG)
 
 # Features
 
-*  Generate curved tool paths for FFF-Printers
+*  Generate curved tool paths for FFF-Printers including normal vectors for 5-axis printing
 *  Generate Preform geometries
-*  Extract geometries for support only generation (not supported by Slic3r anymore)
-*  Import/Export of G-Code, STL, STEP, IGES and ATOS point clouds
-*  Generation of "print onto" geometries
-*  Alignment of 3D scanned parts to their physical counterpart inside the print volume
-*  Stereo camera support to measure exact location of ATOS tracking points in 3D space
-*  Collision detection of nozzle and printed part
-*  Translation/Rotation of geometry inside virtual print bed
-
-
-**This applications supports Slic3r 1.3 - other slicing software is not supported!**
+*  Extract geometries for support only generation
+*  Import/Export of G-Code, STL, STEP, IGES
 
 # Install
-**[Instructions can be found inside the Wiki ](https://gitlab.lrz.de/wolfgangchristl/Real3DFDM/wikis/home)**
+Real3DFFF requires a big set of dependencies, some of them being a bit dated.
+To make things easier, a complete python environment is provided in addition to the code to get you started in no time.
 
-## Notes to some parts/classes of the software
-### Getting the Z-Coordinates
- ```python
- zgetter = ZGetter('test_geometry/sem_test_6_flat_round.stp')
- while(True){
- 	  z_upper, z_lower = zgetter.get_z(x, y)
- }
- ```
- 
-### Notes to the preform algorithm v2 (recommended)
-1. Load → load file (STEP files are very much recommended
-2. Right click on the imported element inside the tree → **Real3DFFF** -> **create preform v2**
-3. Enter an angle so that only the **bottom** of the geometry is selected (check by clicking preview). Angles between 88°-92° should work well
-    
-    *Incorrect angle value*
-    
-    ![incorrect angle](wiki_content/geo_bottom_incorrect.png) 
-    
-    *Correct angle value*
+1. Download the package from the GitHub release section.
+2. Extract the files. 
+3. Run `main.py` using the provided python interpreter in the root folder of the extracted files.
 
-    ![Correct angle](wiki_content/geo_bottom_correct.png)
-4. Enter an angle so that only the **top** of the geometry is selected (check by clicking preview). Angles between 88°-92° should work well
+# Usage
 
-    *Correct angle value*
+```python
+import os
 
-    ![Correct angle](wiki_content/geo_top_correct.png)
+from data_io.loaders import load_step
+from gcode.gcode_visualizer.virtual_reprap import VirtualRepRap
+from gcode.real_3d.generate_curved_layer import generate_curved_layer_christl
+from globals import ANGULAR_DEFLECTION
 
-5. wait!
-6. Export → export preform to stl
+if __name__ == "__main__":
+    """
+    Generate curved layer Fused Filament Fabrication paths using the algorithm according to Christl
+    """
+    path_geo = "test_geometry/wave_rounded/wave_round.stp"
+    # path to preform G-Code
+    path_gcode = "test_geometry/wave_rounded/wave_round_preform_IdeaMaker.gcode"
+    # Path to output file that will be created with the final curved layer gcode inside
+    path_out_file = "test_geometry/wave_rounded/wave_round_curved.gcode"
+    # supply preform geometry if you want to use the local layer index -> This feature does not work yet use None
+    path_preform = None
 
-#### Using first preform algorithm (deprecated, do not use!)
-1. Import → import file
-2. Tools → create preform
-3. wait... (Bugs can happen with rounded edges on geometry)
-4. Export → export preform to stl
+    if os.path.exists(path_out_file):
+        os.remove(path_out_file)
+
+    part_shape = load_step(path_geo)
+    preform_shape = load_step(path_preform)
+    vreprap = VirtualRepRap()
+    preform_gcode = vreprap.readin_gcode(path_gcode, 0.2, 0.4)
+
+    curved_layer_gcode = generate_curved_layer_christl(part_shape, preform_gcode, path_out_file,
+                                                       preform_shape=preform_shape,
+                                                       max_lin_deflection=0.5,
+                                                       ang_deflection=ANGULAR_DEFLECTION,
+                                                       min_segment_length=0.2,
+                                                       max_extrusion_err=0.5,
+                                                       lifted_travel_dist=2,
+                                                       low_trav_clearance=0.5,
+                                                       high_trav_clearance=1,
+                                                       max_len_direct_trav=2,
+                                                       compute_normals=False
+                                                       )
+```
+
+# Notes
+Author: Wolfgang Christl 
+
+All code licensed under GNU LESSER GENERAL PUBLIC LICENSE V3
