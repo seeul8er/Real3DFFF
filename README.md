@@ -1,5 +1,9 @@
 # <img src="real3dfff_logo.png" width="100" height="100" /> Real3DFFF
 
+Traditional vs Curved-Layer Fused Filament Fabrication (CLFFF) using Real3DFFF
+
+https://user-images.githubusercontent.com/24637325/230965579-060c6ff2-75d5-4293-90fa-5e9db6e54b03.mp4
+
 # Features
 
 *  Generate curved tool paths for FFF-Printers including normal vectors for 5-axis printing
@@ -58,6 +62,14 @@ if __name__ == "__main__":
                                                        compute_normals=False
                                                        )
 ```
+
+# Examples
+
+![img0030](https://user-images.githubusercontent.com/24637325/230966753-27a66a8c-9369-49ab-ace8-eaf8485738eb.png)
+
+![extrusion](https://user-images.githubusercontent.com/24637325/230968475-04670609-b0a2-437b-87cc-b3edd10c1a9c.png)
+
+Extrusion rate and computed normal vector.
 
 # Notes
 Author: Wolfgang Christl 
