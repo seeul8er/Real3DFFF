@@ -41,17 +41,26 @@ For the preform geometry, the G-code must now be generated using a slicer. Care 
 
 ### Triangulation of the print geometry
 In the next step, the geometry to be printed is triangulated i.e., its surface is approximated with triangles. This step is not necessary for parts in the STL or similar formats, as their surface already consists of triangles. The CAD formats STEP and IGES can be converted to STL via the OCCT API. The maximum allowed deviation of the resulting geometry from the component geometry is defined by the parameters "linear deflection" and "angular deflection".
-3. Projection of the triangulation into the X/Y plane
+
+### Projection of the triangulation into the X/Y plane
+![grafik](https://user-images.githubusercontent.com/24637325/231286843-59625d16-b346-4f43-b316-5fedb7ca2262.png)
+
 All triangular surfaces with a surface normal parallel to the Z-axis are now removed from the resulting triangular grid. The same applies to surfaces whose normal has a Z-component of zero. In these areas the curvature of the component surface is constant or irrelevant. As a result we receive all surfaces of the approximated component geometry where the component has a curvature. All edges of these surfaces are projected into the XY-plane. In the following, these edges are called the "adjustment layer".
 
 ### Preform G-code segmentation
-Now the G-code of the preform can be adapted to the final geometry. In the next step, the G-code of the preform is loaded. The individual layers are identified with their layer index and the corresponding Z-coordinate. The slicer has stored this information in the G-code via the defined notation. The following step only considers the G-code segments in which an extrusion actually takes place. Travel movements are ignored for now. Each G-Code layer is projected into the XY-plane. Now all extrusions of a G-Code layer are intersected with the edges of the adjustment layer that were previously projected into the XY-plane. This step is conducted for each layer of the Preform G-code. The resulting intersections give the points in the Preform G-code where a G-Code move (extrusion segment) must be split and the Z-coordinates adjusted to fit the final geometry. Each start and end point of a movement from the preform G-code must also be adjusted in the Z-direction. This ensures that the final G-code exactly fills the parts volume that is defined by triangulation. OCCT helps to calculate the intersection points between the G-code layer and the adjustment layer.
+![grafik](https://user-images.githubusercontent.com/24637325/231286930-cdc024f9-2234-4b85-a0a4-a3b8fcd228ae.png)
+
+Now the G-code of the preform can be adapted to the final geometry. In the next step, the G-code of the preform is loaded. The individual layers are identified with their layer index and the corresponding Z-coordinate. The slicer has stored this information in the G-code via the defined notation. The following step only considers the G-code segments in which an extrusion actually takes place. Travel movements are ignored for now. Each G-Code layer is projected into the XY-plane.  
+Now all extrusions of a G-Code layer are intersected with the edges of the adjustment layer that were previously projected into the XY-plane. This step is conducted for each layer of the Preform G-code. The resulting intersections give the points in the Preform G-code where a G-Code move (extrusion segment) must be split and the Z-coordinates adjusted to fit the final geometry. Each start and end point of a movement from the preform G-code must also be adjusted in the Z-direction. This ensures that the final G-code exactly fills the parts volume that is defined by triangulation. OCCT helps to calculate the intersection points between the G-code layer and the adjustment layer.
+
+![part_to_clfff_gcode_2d](https://user-images.githubusercontent.com/24637325/231271511-3bdea28e-3cfc-4a35-bfa9-0e63d22a08e0.jpg)
 
 ### Removal of short G-code segments
+![grafik](https://user-images.githubusercontent.com/24637325/231287256-3a42ce15-52e8-4187-b714-33e5418d8e0b.png)
+
 The segmentation of Preform G-code layers can result in very short extrusion segments. The minimum allowed segment length can be defined by a parameter in the Real3DFFF application. Segments that do not meet the criterion are deleted and the resulting gap is filled by adjusting the start point of the following segment. This step is performed in the 2D and in the XY-plane.
 
 ### Adjustment of the Z-coordinate of each segment
-![part_to_clfff_gcode_2d](https://user-images.githubusercontent.com/24637325/231271511-3bdea28e-3cfc-4a35-bfa9-0e63d22a08e0.jpg)
 ![grafik](https://user-images.githubusercontent.com/24637325/231278412-b8a50052-d5f2-432f-85cf-e4a34f75615c.png)
 
 [7-1]
@@ -65,22 +74,35 @@ The new Z-coordinate of each segment end point at (X, Y) is calculated according
 ### Recalculation of the extrusion rate per G-Code segment
 Since the cross-section of the part can change but the number of layers remains constant through the cross-section, the extrusion rate must be scaled according to the increasing/decreasing local layer thickness (adaptive layer thickness).  
 
+[7-2]
+
 $$E_{Segment,new}=E_{Segment,Preform}\frac{h_{layer}}{h_{layer,Preform}}$$
 
 Where $E_{Segment,new}$ is the new extrusion rate on the segment. It results from the extrusion rate of the segment in the preform G-code $E_{Segment,Preform}$, its layer thickness $h_{layer,Preform}$ and the newly calculated layer thickness $h_{layer}$.
 By shifting the end point of the segment in Z-direction, an elongation of the segment takes place. To compensate for this, the extrusion rate is multiplied by another factor.
 
+[7-3]
 
+$$E_{Segment,new,\Delta l}=E_{Segment,new}\frac{l_{3D}}{l_{2D}}$$
 
-Here l_3D is the length of the segment adjusted in the Z-direction and l_2D its projection in the XY-plane, i.e. the length of the segment in the preform G-code.
+Here $l_{3D}$ is the length of the segment adjusted in the Z-direction and $l_{2D}$ its projection in the XY-plane, i.e. the length of the segment in the preform G-code.
+
+![grafik](https://user-images.githubusercontent.com/24637325/231287371-9fb53c1d-2f00-4a30-aaae-c0c713be00c4.png)
 
 ### Approximation of the normal vector
-As already described, ZGetter also provides the normal vector at the top and bottom (n ⃑_upper and n ⃑_lower) of the component geometry at the location (X, Y).
-By means of linear interpolation, "intermediate vectors" can be calculated for the individual levels.  
-w=(z_Segment-z_lower)/(z_upper-z_lower )
-n ⃑_Segment=wn ⃑_upper+(1-w) n ⃑_lower	(7 4)
 
-The interpolated normal vector n ⃑_Segment is the normal vector for the currently considered segment (7-5). The parameter z_Segment specifies the Z-coordinate of the layer for which the normal vector is to be calculated. The normal vector is outputted in the final G-code. To ensure compatibility with 3-axis FFF printers and common slicer software, the normal vector is written to the G-code file as follows:  
+![grafik](https://user-images.githubusercontent.com/24637325/231286350-f0a96018-a301-42e2-9de9-d57a4d58e1d7.png)
+
+As already described, ZGetter also provides the normal vector at the top and bottom ($\vec{n_{upper}}$ and $\vec{n_{lower}}$) of the component geometry at the location (X, Y).
+By means of linear interpolation, "intermediate vectors" can be calculated for the individual levels.
+
+[7-4]
+
+$$w=\frac{\vec{n_{Segment}}-\vec{n_{lower}}}{\vec{n_{upper}}-\vec{n_{lower}}}$$
+
+$$\vec{n_{Segment}}=w\vec{n_{upper}}+(1-w)\vec{n_{lower}}$$
+
+The interpolated normal vector $\vec{n_{Segment}}$ is the normal vector for the currently considered segment [7-5]. The parameter $\vec{z_{Segment}}$ specifies the Z-coordinate of the layer for which the normal vector is to be calculated. The normal vector is outputted in the final G-code. To ensure compatibility with 3-axis FFF printers and common slicer software, the normal vector is written to the G-code file as follows:  
 In addition to the X, Y, Z and E coordinates of an extrusion instruction, the parameters N, O and R are added to the instruction. The three coordinates of the normal vector are stored as additional parameters. The parameter N stores the X-component, O the Y-component and R the Z-value of the normal. The previously defined printer coordinate system is used.
 
 ### Further G-code adjustments
@@ -93,10 +115,26 @@ With short travel movements, the printhead is raised by a defined value before i
 In the case of direct travel movements, the printhead is not raised, but travels directly in a straight line to the target point. 
 
 #### Segmentation for linear cross-section changes
-The method described so far for segmenting the preform G-code uses the triangulation of the part surface. In areas with linear cross-section changes of the part, there are only very few edges available from the tessellation. As a result, an extrusion is not split up very often and only a few G-code segments are created in such an area. This is problematic since the extrusion rate on a G-Code segment can only be constant. Due to the linear increase of the final parts cross section, a constant change in layer height of the final G-Code is required. The required increase in layer height and thereby also in extrusion rate can only be achieved by splitting the G-Code segment into multiple segments to approximate that linear increase.  
-The developed algorithm therefore subdivides a G-Code segment of the preform into n_seg segments, so that the extrusion rate on each sub-segment can be adapted to the cross-section change of the part.
 
-Where h_s and h_e are the required layer heights at the start and end of a linear increasing cross section. The parameter E_S is user defined and describes the mean extrusion error per created sub-segment over the entire segment. The formular [7-5] is adapted from the error function of the Riemann Integral for monotonically increasing/decreasing functions. The segment of the previous layer directly below the currently considered segment f(x) is described as a straight line g(x).
+![grafik](https://user-images.githubusercontent.com/24637325/231286210-e29d017c-825d-4f80-a70f-b1147f28593a.png)
+
+The method described so far for segmenting the preform G-code uses the triangulation of the part surface. In areas with linear cross-section changes of the part, there are only very few edges available from the tessellation. As a result, an extrusion is not split up very often and only a few G-code segments are created in such an area. This is problematic since the extrusion rate on a G-Code segment can only be constant. Due to the linear increase of the final parts cross section, a constant change in layer height of the final G-Code is required. The required increase in layer height and thereby also in extrusion rate can only be achieved by splitting the G-Code segment into multiple segments to approximate that linear increase.  
+The developed algorithm therefore subdivides a G-Code segment of the preform into $n_seg$ segments, so that the extrusion rate on each sub-segment can be adapted to the cross-section change of the part.
+
+[7-5]
+
+$$\vec{n_{seg}} = \lfloor{ \sqrt{\frac{l_{2D}}{2E_S}\vert{h_e-h_s}\vert}+1}\rfloor, \vec{n_{seg}}\in N+$$
+
+Where $h_s$ and $h_e$ are the required layer heights at the start and end of a linear increasing cross section. The parameter $E_S$ is user defined and describes the mean extrusion error per created sub-segment over the entire segment. The formular [7-5] is adapted from the error function of the Riemann Integral for monotonically increasing/decreasing functions. The segment of the previous layer directly below the currently considered segment $f(x)$ is described as a straight line $g(x)$.
+
+#### Support Structures
+
+Depending on the geometry to be printed, support structures are necessary to support overhangs (~>45°). Since components with undercuts have been excluded for this process, only support structures that lie directly on the build platform need to be considered. To generate the support structures, the underside of the component geometry (surfaces with angles to the Z-axis <90°) is identified. These are extracted and passed to a conventional slicer. The slicer generates the G-code for the support structures below the extracted surface. No G-code is generated for the surface itself when using supported slicers, as the surface does not represent a closed volume. Depending on the slicer, additional settings may have to be made so that such non-manifold geometries (extracted surfaces of the component underside) are not automatically repaired or ignored. Also, in this step it is important that the slicer does not reposition the part on the build plate, so that later the support structure is directly under the part to be printed. The G-code for the support structure printed first. Then the CLFFF G-code can be executed.
+
+## Implmentation
+
+![grafik](https://user-images.githubusercontent.com/24637325/231286004-9a9de0e7-a719-4a57-9db6-de3135acd2e9.png)
+
 
 # Install
 Real3DFFF requires a big set of dependencies, some of them being a bit dated.
