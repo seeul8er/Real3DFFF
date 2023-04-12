@@ -13,8 +13,6 @@ https://user-images.githubusercontent.com/24637325/230965579-060c6ff2-75d5-4293-
 
 # How does it work
 
-*This section is WIP*
-
 ![part_to_clfff_gcode](https://user-images.githubusercontent.com/24637325/231271483-11810f2f-6010-46c9-97e7-523010124045.jpg)
 
 ## Abstract
@@ -87,8 +85,6 @@ $$E_{Segment,new,\Delta l}=E_{Segment,new}\frac{l_{3D}}{l_{2D}}$$
 
 Here $l_{3D}$ is the length of the segment adjusted in the Z-direction and $l_{2D}$ its projection in the XY-plane, i.e. the length of the segment in the preform G-code.
 
-![grafik](https://user-images.githubusercontent.com/24637325/231287371-9fb53c1d-2f00-4a30-aaae-c0c713be00c4.png)
-
 ### Approximation of the normal vector
 
 ![grafik](https://user-images.githubusercontent.com/24637325/231286350-f0a96018-a301-42e2-9de9-d57a4d58e1d7.png)
@@ -117,9 +113,10 @@ In the case of direct travel movements, the printhead is not raised, but travels
 #### Segmentation for linear cross-section changes
 
 ![grafik](https://user-images.githubusercontent.com/24637325/231286210-e29d017c-825d-4f80-a70f-b1147f28593a.png)
+![grafik](https://user-images.githubusercontent.com/24637325/231287371-9fb53c1d-2f00-4a30-aaae-c0c713be00c4.png)
 
 The method described so far for segmenting the preform G-code uses the triangulation of the part surface. In areas with linear cross-section changes of the part, there are only very few edges available from the tessellation. As a result, an extrusion is not split up very often and only a few G-code segments are created in such an area. This is problematic since the extrusion rate on a G-Code segment can only be constant. Due to the linear increase of the final parts cross section, a constant change in layer height of the final G-Code is required. The required increase in layer height and thereby also in extrusion rate can only be achieved by splitting the G-Code segment into multiple segments to approximate that linear increase.  
-The developed algorithm therefore subdivides a G-Code segment of the preform into $n_seg$ segments, so that the extrusion rate on each sub-segment can be adapted to the cross-section change of the part.
+The developed algorithm therefore subdivides a G-Code segment of the preform into $n_{seg}$ segments, so that the extrusion rate on each sub-segment can be adapted to the cross-section change of the part.
 
 [7-5]
 
@@ -146,6 +143,17 @@ To make things easier, a complete python environment is provided in addition to 
 
 # Usage
 
+1. Create a Preform for the to-be-printed geometry (an extruded shadow of the part)
+2. Slice the Preform geometry with a supported slicer (Slic3r or variants, IdeaMaker) adding the necessary annootations (see below)
+3. Run the below script within the provided Python environment.
+
+Annotations necessary for Slic3r based slicers like PrusaSlicer, SuperSlicer etc.:  
+Add a custom gcode at layer change: 
+```
+; layer_num=[layer_num]
+; layer_z=[layer_z]
+```
+
 ```python
 import os
 
@@ -158,6 +166,7 @@ if __name__ == "__main__":
     """
     Generate curved layer Fused Filament Fabrication paths using the algorithm according to Christl
     """
+    # Path to file representing the final shape
     path_geo = "test_geometry/wave_rounded/wave_round.stp"
     # path to preform G-Code
     path_gcode = "test_geometry/wave_rounded/wave_round_preform_IdeaMaker.gcode"
