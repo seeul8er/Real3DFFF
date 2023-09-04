@@ -98,7 +98,7 @@ $$w=\frac{\vec{n_{Segment}}-\vec{n_{lower}}}{\vec{n_{upper}}-\vec{n_{lower}}}$$
 
 $$\vec{n_{Segment}}=w\vec{n_{upper}}+(1-w)\vec{n_{lower}}$$
 
-The interpolated normal vector $\vec{n_{Segment}}$ is the normal vector for the currently considered segment [7-5]. The parameter $\vec{z_{Segment}}$ specifies the Z-coordinate of the layer for which the normal vector is to be calculated. The normal vector is outputted in the final G-code. To ensure compatibility with 3-axis FFF printers and common slicer software, the normal vector is written to the G-code file as follows:  
+The interpolated normal vector $\vec{n_{Segment}}$ is the normal vector for the currently considered segment [7-5]. The parameter $\vec{z_{Segment}}$ specifies the Z-coordinate of the layer for which the normal vector is to be calculated. While this approximation gives good results, it has to be checked that the vectors calculated are actually always perpendicular to the movement/g-code segment. A future improvement would be to ensure that by only interpolating the radial angle (rotational position) of the normal vector to the movement. The normal vector is outputted in the final G-code. To ensure compatibility with 3-axis FFF printers and common slicer software, the normal vector is written to the G-code file as follows:  
 In addition to the X, Y, Z and E coordinates of an extrusion instruction, the parameters N, O and R are added to the instruction. The three coordinates of the normal vector are stored as additional parameters. The parameter N stores the X-component, O the Y-component and R the Z-value of the normal. The previously defined printer coordinate system is used.
 
 ### Further G-code adjustments
